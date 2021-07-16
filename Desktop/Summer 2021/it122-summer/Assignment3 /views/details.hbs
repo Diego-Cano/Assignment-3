@@ -1,0 +1,13 @@
+<a class="home" href="./">Home</a>
+<h2>{{country}} Details:</h2>
+<hr>
+<h3>The top 5 most populous countries in South America are:</h3>
+
+{{#if result}}
+    <li>Country: {{ result.country }}
+    <li>Population: {{ result.population }}
+    <li>Capital: {{ result.capital }}
+    <li>Currency: {{ result.currency }}
+{{else}}
+    not found
+{{/if}}
