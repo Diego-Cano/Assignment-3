@@ -2,13 +2,15 @@
 import express from 'express';
 import handlebars from 'express-handlebars';
 import { Country } from "./models/southamerica.js";
+import cors from 'cors';
 
 const app = express();
 
 app.set("port", process.env.PORT || 3000);
 app.use(express.static('./public'));
 app.use(express.urlencoded());
-app.use(express.json());
+app.use(express.json()); //Used to parse JSON bodies
+app.use('/api', cors()); // set Access-Control-Allow-Origin header for api route
 
 app.engine('hbs', handlebars({defaultLayout: "main.hbs"}));
 app.set("view engine", "hbs");
@@ -38,14 +40,69 @@ app.get('/detail', (req,res,next) => {
 });
 
 
-app.get('/delete', (req,res,next) => {
+// API ROUTES
+
+app.get('/api/countries', (req, res, next) => {
+    Country.find({}).lean()
+      .then((countries) => {
+        if(countries){
+            res.json(countries)
+        }
+        else{
+            res.status(500).send('Database Error occurred');
+        }   
+      })
+      .catch(err => next(err));
+});
+
+app.get('/api/countries/detail/:country', (req,res,next) => {
     // db query can use request parameters
-    Country.deleteOne({ country:req.query.country }).lean()
+    Country.findOne({ country:req.params.country }).lean()
         .then((country) => {
-            res.render('delete', {result: country} );
+            if(country){
+                res.json(country)
+            }
+            else{
+                res.status(500).send('Database Error occurred');
+            } 
         })
         .catch(err => next(err));
 });
+
+
+app.post('/api/countries/add', (req, res, next) => {
+    if(!req.body){
+        return res.status(400).send('Request body is missing')
+    }
+        let model = new Country(req.body) 
+        model.save()
+        res.json({"message":"all good"})
+        console.log(req.body)
+});
+
+app.post('/api/countries/delete', (req,res,next) => {
+    // db query can use request parameters
+        Country.deleteOne({ country: req.body.country }).lean()
+        .then((country) => {
+            console.log(req.body)
+            let model = new Country(req.body)
+            res.json({"message":"all good"})
+        })
+        .catch(err => {
+            res.status(500).send('Request body is missing')
+        });
+});
+
+// app.post('/api/countries/add', (req,res,next) => {
+//     Country.insertOne({ country: req.body.country }).lean()
+//     .then((country) => {
+//         console.log(req.body)
+//         res.json({"message":"all good"})
+//     })
+//     .catch(err => {
+//         res.status(500).send('Request body is missing')
+//     });
+// });
 
 
 // define 404 handler
