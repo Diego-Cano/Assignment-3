@@ -18,8 +18,8 @@ app.set("view engine", "hbs");
 app.get('/', (req, res, next) => {
     Country.find({}).lean()
       .then((countries) => {
-        // respond to browser only after db query completes
             res.render('home', { countries });
+            // res.render('home', {countries: JSON.stringify(countries)}); 
       })
       .catch(err => next(err));
 });
@@ -43,66 +43,44 @@ app.get('/detail', (req,res,next) => {
 // API ROUTES
 
 app.get('/api/countries', (req, res, next) => {
-    Country.find({}).lean()
-      .then((countries) => {
-        if(countries){
-            res.json(countries)
-        }
-        else{
-            res.status(500).send('Database Error occurred');
-        }   
-      })
-      .catch(err => next(err));
+    Country.find((err,results) => {
+        if (err || !results) return next(err);
+        res.json(results);
+    });
 });
+
 
 app.get('/api/countries/detail/:country', (req,res,next) => {
-    // db query can use request parameters
-    Country.findOne({ country:req.params.country }).lean()
-        .then((country) => {
-            if(country){
-                res.json(country)
-            }
-            else{
-                res.status(500).send('Database Error occurred');
-            } 
-        })
-        .catch(err => next(err));
+    let country = req.params.country;
+    Country.findOne({country: country}, (err, result) => {
+        if (err || !result) return next(err);
+        res.json( result );    
+    });
 });
 
 
-app.post('/api/countries/add', (req, res, next) => {
-    if(!req.body){
-        return res.status(400).send('Request body is missing')
+app.post('/api/countries/add/', (req, res, next) => {
+    if (!req.body._id) { // insert new document
+        let country = new Country(req.body);
+        country.save((err,newCountry) => {
+            if (err) return next(err);
+            res.json({updated: 0, _id: newCountry._id});
+        });
+    } else { // update existing document
+        Country.updateOne({ _id: req.body._id}, {country:req.body.country, capital: req.body.capital, population: req.body.population, currency: req.body.currency }, (err, result) => {
+            if (err) return next(err);
+            res.json({updated: result.nModified, _id: req.body._id});
+        });
     }
-        let model = new Country(req.body) 
-        model.save()
-        res.json({"message":"all good"})
-        console.log(req.body)
 });
 
-app.post('/api/countries/delete', (req,res,next) => {
-    // db query can use request parameters
-        Country.deleteOne({ country: req.body.country }).lean()
-        .then((country) => {
-            console.log(req.body)
-            let model = new Country(req.body)
-            res.json({"message":"all good"})
-        })
-        .catch(err => {
-            res.status(500).send('Request body is missing')
+app.post('/api/countries/delete/:id', (req,res,next) => {
+        Country.deleteOne({"_id":req.params.id }, (err, result) => {
+            if (err) return next(err);
+            // return # of items deleted
+            res.json({"deleted": result});
         });
 });
-
-// app.post('/api/countries/add', (req,res,next) => {
-//     Country.insertOne({ country: req.body.country }).lean()
-//     .then((country) => {
-//         console.log(req.body)
-//         res.json({"message":"all good"})
-//     })
-//     .catch(err => {
-//         res.status(500).send('Request body is missing')
-//     });
-// });
 
 
 // define 404 handler
