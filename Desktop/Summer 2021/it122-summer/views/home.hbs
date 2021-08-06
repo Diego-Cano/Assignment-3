@@ -1,6 +1,49 @@
-<h2 class="home">Home</h2>
+{{!-- <h2 class="home">Home</h2>
 <hr>
 <h3>The top 5 most populous countries in South America are:</h3>
 {{#each countries}}
     <li><a href="/detail?country={{country}}">{{country}}</a></li>
-{{/each}}
+{{/each}} --}}
+
+<h2 class="home">Home</h2>
+<hr>
+<h3>The top 5 most populous countries in South America are:</h3>
+
+<div id="root"></div>
+
+<script type="text/babel">
+    const countries = {{{countries}}}
+    console.log(countries)
+
+    const ulStyle = {
+        listStyleType:'none',
+        fontSize:'2em',
+        color: 'white',
+        textShadow: 'gray 1px 1px'
+
+    }
+
+    // click event handler
+    const showDetail = (event) => {
+        // <a href={"/detail?title="+item.title}>
+        console.log(event.target)
+        console.log(event.target.innerText)
+        console.log(event.target.id)
+        window.location.href = "/detail?country=" + event.target.innerText;
+    }
+
+    const Countries = (props) => {
+        // props is an array
+        console.log(props)
+        const listItems = props.data.map((country) =>
+        <li key={country._id} id={country._id} onClick={props.clickHandler}>
+            {country.country}
+        </li>);
+        return <ul style={ulStyle}>{listItems}</ul>
+    }
+
+    ReactDOM.render(
+        <div><Countries data={countries} clickHandler={showDetail} /></div>,
+    document.getElementById('root')
+    );
+</script>

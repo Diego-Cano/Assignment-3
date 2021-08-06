@@ -8,6 +8,9 @@
     <li>Population: {{ result.population }}
     <li>Capital: {{ result.capital }}
     <li>Currency: {{ result.currency }}
+    <p>
+    <a href="/delete?title={{result.title}}">Delete</a>
+    </p>
 {{else}}
-    not found
+    <h2>{{title}} not found</h2>
 {{/if}}

@@ -18,8 +18,8 @@ app.set("view engine", "hbs");
 app.get('/', (req, res, next) => {
     Country.find({}).lean()
       .then((countries) => {
-            res.render('home', { countries });
-            // res.render('home', {countries: JSON.stringify(countries)}); 
+            // res.render('home', { countries });
+            res.render('home', {countries: JSON.stringify(countries)}); 
       })
       .catch(err => next(err));
 });
