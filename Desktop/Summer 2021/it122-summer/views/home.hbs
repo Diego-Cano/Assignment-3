@@ -1,49 +1,105 @@
-{{!-- <h2 class="home">Home</h2>
-<hr>
-<h3>The top 5 most populous countries in South America are:</h3>
-{{#each countries}}
-    <li><a href="/detail?country={{country}}">{{country}}</a></li>
-{{/each}} --}}
-
-<h2 class="home">Home</h2>
-<hr>
-<h3>The top 5 most populous countries in South America are:</h3>
+{{!-- || "" is used as a conditional so the clear button works  ItemDetail >> INPUTS--}}
 
 <div id="root"></div>
 
 <script type="text/babel">
-    const countries = {{{countries}}}
-    console.log(countries)
 
     const ulStyle = {
         listStyleType:'none',
-        fontSize:'2em',
+        fontSize:'1em',
         color: 'white',
         textShadow: 'gray 1px 1px'
 
     }
 
-    // click event handler
-    const showDetail = (event) => {
-        // <a href={"/detail?title="+item.title}>
-        console.log(event.target)
-        console.log(event.target.innerText)
-        console.log(event.target.id)
-        window.location.href = "/detail?country=" + event.target.innerText;
+    const ItemList = (props) => {
+        const bullets = props.items.map((item) => {
+            return <li onClick={props.handleClick} key={item._id}>{item.country}</li>
+        });
+        return <ul style={ulStyle}>{bullets}</ul>
     }
 
-    const Countries = (props) => {
-        // props is an array
-        console.log(props)
-        const listItems = props.data.map((country) =>
-        <li key={country._id} id={country._id} onClick={props.clickHandler}>
-            {country.country}
-        </li>);
-        return <ul style={ulStyle}>{listItems}</ul>
+    const ItemDetail = (props) => {
+            return <div>
+                        <h3>Country Details:</h3>
+                        <form>
+                            Country:  <input onChange={props.handleEdit} type="text" name="country" value={props.item.country || ""} />
+                            <br/>
+                            Capital: <input onChange={props.handleEdit} type="text" name="capital" value={props.item.capital || ""}/>
+                            <br/>
+                            Currency: <input onChange={props.handleEdit} type="text" name="currency" value={props.item.currency || ""}/>
+                            <br/>
+                            Population: <input onChange={props.handleEdit} type="text" name="population" value={props.item.population || ""}/>
+                        </form>
+                        <button onClick={props.handleClear}>Clear</button> 
+                        <button onClick={props.handleSave}>Save</button>
+                    </div>
     }
 
-    ReactDOM.render(
-        <div><Countries data={countries} clickHandler={showDetail} /></div>,
-    document.getElementById('root')
-    );
+    class App extends React.Component{
+            constructor(props){
+                super(props);
+                this.state = {
+                    items: {{{countries}}},
+                    currentItem:{}
+                };
+                this.selectItem = this.selectItem.bind(this);
+                this.handleClear = this.handleClear.bind(this);
+                this.handleEdit = this.handleEdit.bind(this);
+            }
+
+
+            handleEdit (e) {
+                const newItem = this.state.currentItem;
+                newItem[e.target.name] = e.target.value;
+                console.log(newItem);
+                console.log(e.target);
+                this.setState({currentItem : newItem});
+            }
+
+            handleClear () {
+                this.setState({currentItem:{}})
+            }
+
+            handleSave = () => {
+                console.log('save')
+                let country = this.state.currentItem;
+                    fetch("/api/countries/add/", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(country)
+                })
+                    .then(res => res.json())
+                    .then((json) => { console.log(json) });
+
+            }
+
+            selectItem (e) {
+                const found = this.state.items.find((item) => {
+                    return item.country === e.target.innerText;
+                });
+                this.setState({currentItem: found})
+            }
+
+            render(){
+                //render app UI elements
+                return(
+                    <div>
+                    <h2>South American Countries</h2>
+                    <ItemList items={this.state.items} handleClick={this.selectItem}/>
+                    <hr/>
+                    <ItemDetail
+                    item={this.state.currentItem}
+                    handleClear={this.handleClear}
+                    handleEdit={this.handleEdit}
+                    handleDelete={this.handleDelete}
+                    handleSave={this.handleSave}
+                    />
+                    </div>
+                );
+            }
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+    
 </script>
